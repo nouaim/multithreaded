@@ -13,7 +13,14 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        handle_connection(stream);
+        // handle_connection(stream);  // Single Threaded connection, uncomment this if you want to test a single threaded server.
+
+        // thread::spawn will create a new thread and then run the code in the closure in the new thread.
+        // If you run this code and load /sleep in your browser, then / in two more browser tabs, you’ll 
+        // indeed see that the requests to / don’t have to wait for /sleep to finish.
+        thread::spawn(|| {
+            handle_connection(stream);
+        });
     }
 }
 
@@ -37,8 +44,7 @@ fn handle_connection(mut stream: TcpStream) {
     let contents = fs::read_to_string(filename).unwrap();
     let length = contents.len();
 
-    let response =
-        format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
     stream.write_all(response.as_bytes()).unwrap();
 }
